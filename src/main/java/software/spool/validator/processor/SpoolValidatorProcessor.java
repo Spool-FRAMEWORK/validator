@@ -14,7 +14,7 @@ import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@SupportedAnnotationTypes("software.spool.validator.api.SpoolValidator")
+@SupportedAnnotationTypes("software.spool.validator.api.Validate")
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class SpoolValidatorProcessor extends AbstractProcessor {
 
