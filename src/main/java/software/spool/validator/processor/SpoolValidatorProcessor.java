@@ -37,8 +37,24 @@ public class SpoolValidatorProcessor extends AbstractProcessor {
 
     private void writeServiceFile() {
         try {
+            // 1. Leer entradas existentes
+            try {
+                FileObject existing = processingEnv.getFiler()
+                        .getResource(StandardLocation.CLASS_OUTPUT, "", SERVICE_FILE);
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(existing.openInputStream()))) {
+                    reader.lines()
+                            .map(String::trim)
+                            .filter(l -> !l.isEmpty())
+                            .forEach(discovered::add); // acumula sin duplicados
+                }
+            } catch (IOException ignored) {
+                // El archivo aún no existe, es la primera vez
+            }
+
+            // 2. Escribir todo (previo + nuevo)
             FileObject file = processingEnv.getFiler()
-                .createResource(StandardLocation.CLASS_OUTPUT, "", SERVICE_FILE);
+                    .createResource(StandardLocation.CLASS_OUTPUT, "", SERVICE_FILE);
             try (Writer writer = file.openWriter()) {
                 for (String className : discovered) {
                     writer.write(className);
@@ -47,8 +63,8 @@ public class SpoolValidatorProcessor extends AbstractProcessor {
             }
         } catch (IOException e) {
             processingEnv.getMessager().printMessage(
-                Diagnostic.Kind.ERROR,
-                "Failed to write service file: " + e.getMessage()
+                    Diagnostic.Kind.ERROR,
+                    "Failed to write service file: " + e.getMessage()
             );
         }
     }
