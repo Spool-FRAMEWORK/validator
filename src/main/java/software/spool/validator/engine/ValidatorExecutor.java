@@ -1,15 +1,11 @@
 package software.spool.validator.engine;
 
-import software.spool.validator.api.Severity;
-import software.spool.validator.api.ValidationException;
-import software.spool.validator.api.ValidationResult;
-import software.spool.validator.api.Validator;
+import software.spool.validator.api.*;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 final class ValidatorExecutor {
-
     private final ValidatorStore store;
 
     ValidatorExecutor(ValidatorStore store) {
@@ -18,68 +14,63 @@ final class ValidatorExecutor {
 
     <T> void validate(String sourceId, T event) throws ValidationException {
         requireEvent(event);
-
-        for (ValidatorDescriptor<?> candidate : store.descriptorsFor(sourceId, event.getClass())) {
-            ValidationException failure = execute(candidate, event);
-            if (failure != null) {
-                throw failure;
-            }
+        for (Validator<?> validator : store.validatorsFor(sourceId, event.getClass())) {
+            ValidationException failure = validateSafely(validator, event);
+            if (failure != null) throw failure;
         }
     }
 
     <T> ValidationResult validateAll(String sourceId, T event) {
-        if (event == null) {
-            return ValidationResult.of(List.of(
+        if (event == null) return ValidationResult.of(List.of(
                     new ValidationException("event", "Event must not be null", Severity.CRITICAL)
             ));
-        }
+        return ValidationResult.of(getViolations(sourceId, event));
+    }
 
-        List<ValidationException> failures = new ArrayList<>();
-
-        for (ValidatorDescriptor<?> candidate : store.descriptorsFor(sourceId, event.getClass())) {
-            ValidationException failure = execute(candidate, event);
-            if (failure == null) {
-                continue;
-            }
-
-            failures.add(failure);
-
-            if (failure.getSeverity() == Severity.CRITICAL) {
-                break;
-            }
-        }
-
-        return ValidationResult.of(failures);
+    private <T> List<ValidationException> getViolations(String sourceId, T event) {
+        return store.validatorsFor(sourceId, event.getClass()).stream()
+                .map(v -> validateSafely(v, event))
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private void requireEvent(Object event) throws ValidationException {
-        if (event == null) {
-            throw new ValidationException("event", "Event must not be null");
-        }
+        if (event == null) throw new ValidationException("event", "Event must not be null");
+    }
+
+    private <T> ValidationException validateSafely(Validator<?> validator, T event) {
+        return validateTyped(cast(validator), event);
     }
 
     @SuppressWarnings("unchecked")
-    private <T> ValidationException execute(ValidatorDescriptor<?> candidate, T event) {
-        ValidatorDescriptor<T> descriptor = (ValidatorDescriptor<T>) candidate;
-        Validator<T> validator = descriptor.validator();
+    private <T> Validator<T> cast(Validator<?> validator) {
+        return (Validator<T>) validator;
+    }
 
+    private <T> ValidationException validateTyped(Validator<T> validator, T event) {
+        Severity severity = annotationOf(validator).severity();
         try {
-            boolean valid = validator.validate(event);
-            if (valid) {
-                return null;
-            }
-
+            if (validator.validate(event)) return null;
             return new ValidationException(
                     validator.failedField(),
                     validator.failMessage(event),
-                    descriptor.severity()
+                    severity
             );
         } catch (Exception e) {
             return new ValidationException(
                     validator.failedField(),
-                    "Unexpected error in " + descriptor.validatorName() + ": " + e.getMessage(),
-                    descriptor.severity()
+                    "Unexpected error in " + validator.getClass().getSimpleName() + ": " + e.getMessage(),
+                    severity
             );
         }
+    }
+
+    private static Validate annotationOf(Validator<?> validator) {
+        Validate annotation = validator.getClass().getAnnotation(Validate.class);
+        if (annotation == null)
+            throw new IllegalArgumentException(
+                    validator.getClass().getName() + " must be annotated with @Validate"
+            );
+        return annotation;
     }
 }

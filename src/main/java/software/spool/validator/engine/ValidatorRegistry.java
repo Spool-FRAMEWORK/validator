@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.Optional;
 
 public final class ValidatorRegistry {
-
     private final ValidatorStore store;
     private final ValidatorExecutor executor;
 

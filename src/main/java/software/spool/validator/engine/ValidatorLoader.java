@@ -17,7 +17,6 @@ final class ValidatorLoader {
         ServiceLoader.load(rawValidatorType(), classLoader)
                 .stream()
                 .map(ServiceLoader.Provider::get)
-                .map(ValidatorLoader::toWildcardValidator)
                 .forEach(validators::add);
 
         return List.copyOf(validators);
@@ -26,9 +25,5 @@ final class ValidatorLoader {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static Class<Validator> rawValidatorType() {
         return (Class<Validator>) (Class) Validator.class;
-    }
-
-    private static Validator<?> toWildcardValidator(Validator validator) {
-        return validator;
     }
 }
