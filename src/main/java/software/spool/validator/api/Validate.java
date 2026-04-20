@@ -7,6 +7,7 @@ import java.lang.annotation.*;
 @Documented
 public @interface Validate {
     Class<?> value();
+    String sourceId();
     Severity severity() default Severity.CRITICAL;
 
     /**
