@@ -5,7 +5,7 @@ import software.spool.validator.api.*;
 import java.util.List;
 import java.util.Objects;
 
-final class ValidatorExecutor {
+public class ValidatorExecutor {
     private final ValidatorStore store;
 
     ValidatorExecutor(ValidatorStore store) {

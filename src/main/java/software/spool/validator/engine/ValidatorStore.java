@@ -6,7 +6,7 @@ import software.spool.validator.api.Validator;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class ValidatorStore {
+public class ValidatorStore {
     private static final Comparator<Validator<?>> BY_ORDER_AND_NAME =
             Comparator.comparingInt((Validator<?> validator) -> annotationOf(validator).order())
                     .thenComparing(validator -> validator.getClass().getName());
