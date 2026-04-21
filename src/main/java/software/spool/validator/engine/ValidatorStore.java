@@ -17,6 +17,7 @@ public class ValidatorStore {
     }
 
     Optional<Class<?>> resolveClass(String sourceId) {
+        if (Objects.isNull(sourceId)) return Optional.empty();
         Map<Class<?>, List<Validator<?>>> byClass = registry.get(sourceId);
         if (byClass == null || byClass.isEmpty()) return Optional.empty();
         return byClass.keySet().stream().findFirst();
