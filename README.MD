@@ -38,7 +38,7 @@ ValidationResult
       │
       ├── VALID       → persist normally
       ├── WARN        → persist with warning log
-      └── QUARANTINE  → send to QuarantineStore, skip persistence
+      └── QUARANTINE  → publish EnvelopeQuarantined, skip persistence
 ```
 
 Validators are declared with `@Validate` and auto-loaded via `ServiceLoader`. No manual registration needed.
@@ -190,7 +190,7 @@ if (result.isQuarantine()) {
 |---|---|---|
 | `VALID` | No violations. | Persist normally. |
 | `WARN` | One or more non-critical violations. | Persist with warning. |
-| `QUARANTINE` | At least one `CRITICAL` violation. | Send to `QuarantineStore`, skip persistence. |
+| `QUARANTINE` | At least one `CRITICAL` violation. | Publish `EnvelopeQuarantined`, skip persistence. |
 
 ---
 
